@@ -1,4 +1,5 @@
 # Gomu Gomu Survivors iPhone builds
 
-Private macOS compilation of the Unity 6000.3.27f1 native export, version 0.3.0 (3).
-The sealed source export is a private Release asset. No game execution, Apple account or signing credential is used. IPA signing and installation are performed separately by the user in iLoader.
+Private native Unity 6000.3.27f1 compilation for version 0.4.0 (4).
+Luffy combat expansion: nine crew support abilities, precision dodge/counter, boss break and timed supplies.
+Source is a SHA-pinned private Release asset. No game launch, Apple identity, certificate or provisioning profile is used.
