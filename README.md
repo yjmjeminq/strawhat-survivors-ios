@@ -1,6 +1,1 @@
-# Gomu Gomu Survivors iPhone builds
-
-Private Unity 6000.3.27f1 native compilation, version 0.5.0 (5).
-Boss treasure choices, six voyage relics, corrected counter consumption and iPhone haptic feedback.
-Builds validate the ARM64 device binaries, native haptic export and exact Unity Data inventory.
-No game, Play Mode, device installation or native haptic execution is performed.
+Gomu Gomu Survivors v0.6.0 unsigned ARM64 iPhone builder. Builds only this game from a private release containing an exact SHA256-pinned Unity export. The workflow compiles and verifies the device application without launching a game, simulator, or Play Mode. Apple certificates and Apple account credentials are not required for this unsigned package. Recruitment, four-person formation and character switching are implemented in the sealed Unity input, not this helper repository.
