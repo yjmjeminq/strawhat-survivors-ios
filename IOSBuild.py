@@ -21,8 +21,8 @@ import uuid
 import zipfile
 
 BUNDLE = 'com.strawhatprototype.gomusurvivors'
-VERSION, BUILD = '0.4.0', '4'
-IPA_NAME = 'GomuGomuSurvivors-iPhone-unsigned-v0.4.0.ipa'
+VERSION, BUILD = '0.5.0', '5'
+IPA_NAME = 'GomuGomuSurvivors-iPhone-unsigned-v0.5.0.ipa'
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -84,7 +84,8 @@ def inspect_export(project):
     project = Path(project).resolve()
     names = ['Unity-iPhone.xcodeproj/project.pbxproj',
              'Unity-iPhone.xcodeproj/xcshareddata/xcschemes/Unity-iPhone.xcscheme',
-             'Info.plist', 'Libraries/baselib.a', 'Libraries/libiPhone-lib.a']
+             'Info.plist', 'Libraries/baselib.a', 'Libraries/libiPhone-lib.a',
+             'Libraries/Plugins/iOS/StrawhatHaptics.mm']
     tools = []
     for arch, bee in [('arm64', 'arm64'), ('x86_64', 'x64')]:
         base = f'Il2CppOutputProject/IL2CPP/build/deploy_{arch}/'
@@ -222,12 +223,54 @@ def validate_app(app, game_files):
         require(not path.is_symlink(), 'Unexpected app symlink')
         require(path.name not in ('_CodeSignature', 'embedded.mobileprovision'), 'Unexpected signing material')
     main = macho(app / executable, 2)
-    framework = macho(app / 'Frameworks/UnityFramework.framework/UnityFramework', 6)
+    framework_path = app / 'Frameworks/UnityFramework.framework/UnityFramework'
+    framework = macho(framework_path, 6)
+    native_haptics = exported_symbol(framework_path, '_StrawhatHaptic')
     actual = inventory(app / 'Data')
     require(actual == game_files, 'Packaged Unity assets differ from exact source inventory')
     return {'bundleIdentifier': BUNDLE, 'version': VERSION, 'build': BUILD, 'minimumIOS': info.get('MinimumOSVersion'),
             'mainExecutable': main, 'unityFramework': framework, 'gameFiles': len(actual),
-            'gameFilesSHA256': inventory_digest(actual), 'unsigned': True}
+            'gameFilesSHA256': inventory_digest(actual), 'nativeHapticsExported': native_haptics, 'unsigned': True}
+
+
+def exported_symbol(path, name):
+    """Require a defined external symbol in a thin ARM64 Mach-O symbol table."""
+    path = Path(path)
+    size = path.stat().st_size
+    with path.open('rb') as stream:
+        header = stream.read(32)
+        require(len(header) == 32 and header[:4] == b'\xcf\xfa\xed\xfe', 'Native symbol check requires thin ARM64 Mach-O')
+        _, cpu, _, _, count, length, _, _ = struct.unpack('<8I', header)
+        require(cpu == 0x0100000c and 0 < count <= 65536 and length <= size - 32, 'Invalid native symbol header')
+        commands = stream.read(length)
+        at, table = 0, None
+        for _ in range(count):
+            require(at + 8 <= len(commands), 'Truncated symbol load command')
+            command, extent = struct.unpack_from('<II', commands, at)
+            require(extent >= 8 and at + extent <= length, 'Invalid symbol load command')
+            if command == 2:
+                require(extent >= 24 and table is None, 'Invalid/duplicate LC_SYMTAB')
+                table = struct.unpack_from('<4I', commands, at + 8)
+            at += extent
+        require(table is not None, 'Missing native symbol table')
+        symoff, symbols, stroff, string_bytes = table
+        require(0 < symbols <= 1000000 and symoff + symbols * 16 <= size and
+                0 < string_bytes <= 32 * 1024**2 and stroff + string_bytes <= size, 'Invalid native symbol bounds')
+        stream.seek(stroff)
+        strings = stream.read(string_bytes)
+        wanted = name.encode('ascii') + b'\0'
+        index = strings.find(wanted)
+        while index >= 0 and index > 0 and strings[index-1] != 0:
+            index = strings.find(wanted, index+1)
+        require(index >= 0, 'Native haptic symbol name missing')
+        stream.seek(symoff)
+        for _ in range(symbols):
+            row = stream.read(16)
+            require(len(row) == 16, 'Truncated native symbol')
+            string_at, kind, section, description, value = struct.unpack('<IBBHQ', row)
+            if string_at == index and kind & 0xe0 == 0 and kind & 0x0e == 0x0e and kind & 1 and section > 0 and value > 0:
+                return True
+    raise ValueError('Native haptic symbol must be defined and exported')
 
 
 def package(app, ipa):
