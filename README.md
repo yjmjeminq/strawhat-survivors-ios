@@ -1,1 +1,1 @@
-Gomu Gomu Survivors v1.6.0 unsigned ARM64 builder. Compiles normalized crew sprites, owner-specific growth, richer techniques and shared red ground telegraphs from the sealed Unity export. Never launches the game.
+Gomu Gomu Survivors v1.7.0 unsigned ARM64 builder. Compiles canonical character, ability, form and item names from a sealed Unity export. Never launches a player.
