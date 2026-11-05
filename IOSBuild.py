@@ -21,8 +21,8 @@ import uuid
 import zipfile
 
 BUNDLE = 'com.strawhatprototype.gomusurvivors'
-VERSION, BUILD = '1.4.0', '14'
-IPA_NAME = 'GomuGomuSurvivors-iPhone-unsigned-v1.4.0.ipa'
+VERSION, BUILD = '1.5.0', '15'
+IPA_NAME = 'GomuGomuSurvivors-iPhone-unsigned-v1.5.0.ipa'
 ROOT = Path(__file__).resolve().parents[1]
 
 
