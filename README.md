@@ -1,1 +1,1 @@
-Gomu Gomu Survivors v1.0.0 unsigned ARM64 iPhone builder. Builds this game from a private SHA256-pinned Unity export containing evolved crew forms, named East Blue encounters and high-contrast enemy fire. The build uses iPhoneOS without signing credentials.
+Gomu Gomu Survivors v1.1.0 unsigned ARM64 iPhone builder. Uses iPhoneOS to build a private SHA256-pinned Unity export with crew relay and optional voyage challenges.

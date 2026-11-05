@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       source_sha256:
-        description: SHA256 of GomuGomuSurvivors-ios-export-v1.0.0.zip
+        description: SHA256 of GomuGomuSurvivors-ios-export-v1.1.0.zip
         required: true
         type: string
 permissions:
@@ -32,20 +32,20 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           mkdir -p input output
-          gh release download "$SOURCE_TAG" --pattern GomuGomuSurvivors-ios-export-v1.0.0.zip --dir input
+          gh release download "$SOURCE_TAG" --pattern GomuGomuSurvivors-ios-export-v1.1.0.zip --dir input
       - name: Verify archive and every exported file
         env:
           SOURCE_SHA256: ${{ inputs.source_sha256 }}
-        run: python3 IOSBuild.py extract --archive input/GomuGomuSurvivors-ios-export-v1.0.0.zip --sha256 "$SOURCE_SHA256" --output output/extracted
+        run: python3 IOSBuild.py extract --archive input/GomuGomuSurvivors-ios-export-v1.1.0.zip --sha256 "$SOURCE_SHA256" --output output/extracted
       - name: Compile ARM64 iOS device app and package unsigned IPA
-        run: python3 IOSBuild.py build --project output/extracted/ios-export --ipa output/GomuGomuSurvivors-iPhone-unsigned-v1.0.0.ipa --work output/work --report output/build-report.json
+        run: python3 IOSBuild.py build --project output/extracted/ios-export --ipa output/GomuGomuSurvivors-iPhone-unsigned-v1.1.0.ipa --work output/work --report output/build-report.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: success()
         with:
-          name: GomuGomuSurvivors-iPhone-unsigned-v1.0.0
+          name: GomuGomuSurvivors-iPhone-unsigned-v1.1.0
           path: |
-            output/GomuGomuSurvivors-iPhone-unsigned-v1.0.0.ipa
-            output/GomuGomuSurvivors-iPhone-unsigned-v1.0.0.ipa.sha256
+            output/GomuGomuSurvivors-iPhone-unsigned-v1.1.0.ipa
+            output/GomuGomuSurvivors-iPhone-unsigned-v1.1.0.ipa.sha256
             output/build-report.json
             output/input-verification.json
           if-no-files-found: error
@@ -59,7 +59,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
-          name: GomuGomuSurvivors-iOS-diagnostics-v1.0.0
+          name: GomuGomuSurvivors-iOS-diagnostics-v1.1.0
           path: |
             output/build-report.json
             output/input-verification.json
