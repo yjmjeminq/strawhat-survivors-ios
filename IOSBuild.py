@@ -21,8 +21,8 @@ import uuid
 import zipfile
 
 BUNDLE = 'com.strawhatprototype.gomusurvivors'
-VERSION, BUILD = '1.9.0', '19'
-IPA_NAME = 'GomuGomuSurvivors-iPhone-unsigned-v1.9.0.ipa'
+VERSION, BUILD = '1.10.0', '20'
+IPA_NAME = 'GomuGomuSurvivors-iPhone-unsigned-v1.10.0.ipa'
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -319,9 +319,18 @@ def build(project, ipa, work, report_path):
                 'CODE_SIGNING_ALLOWED=NO', 'CODE_SIGNING_REQUIRED=NO', 'CODE_SIGN_IDENTITY=', 'DEVELOPMENT_TEAM=',
                 'COMPILER_INDEX_STORE_ENABLE=NO', 'CONFIGURATION_BUILD_DIR=' + str(products), 'build']
         report['buildArguments'] = args
-        report['sourceRevision'] = os.environ.get('GITHUB_SHA')
-        report['runURL'] = (os.environ.get('GITHUB_SERVER_URL', '') + '/' + os.environ.get('GITHUB_REPOSITORY', '') +
-                            '/actions/runs/' + os.environ.get('GITHUB_RUN_ID', ''))
+        report['sourceRevision'] = os.environ.get('GITHUB_SHA') or os.environ.get('CM_COMMIT')
+        report['runURL'] = None
+        if os.environ.get('GITHUB_RUN_ID'):
+            report['buildProvider'] = 'GitHub Actions'
+            report['runURL'] = (os.environ.get('GITHUB_SERVER_URL', 'https://github.com') + '/' +
+                                os.environ['GITHUB_REPOSITORY'] + '/actions/runs/' + os.environ['GITHUB_RUN_ID'])
+        elif os.environ.get('CM_BUILD_ID'):
+            report['buildProvider'] = 'Codemagic'
+            report['providerBuildId'] = os.environ['CM_BUILD_ID']
+            report['providerProjectId'] = os.environ.get('CM_PROJECT_ID')
+        else:
+            report['buildProvider'] = 'Local Mac'
         started = time.monotonic()
         with (work / 'xcodebuild.log').open('x', encoding='utf-8') as log:
             result = subprocess.run(args, cwd=copied, stdout=log, stderr=subprocess.STDOUT, timeout=3300, check=False)

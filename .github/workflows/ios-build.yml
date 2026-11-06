@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
     inputs:
       source_tag:
-        description: Private release containing the sealed Unity export
+        description: Public release containing the sealed 1.10.0 Unity export
         required: true
         type: string
       source_sha256:
-        description: SHA256 of GomuGomuSurvivors-ios-export-v1.5.0.zip
+        description: SHA256 of GomuGomuSurvivors-ios-export-v1.10.0.zip
         required: true
         type: string
 permissions:
@@ -27,30 +27,31 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - name: Download this game's private export
+      - name: Verify public repository and download this game's sealed export
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_TAG: ${{ inputs.source_tag }}
           GH_REPO: ${{ github.repository }}
         run: |
+          test "$(gh repo view "$GH_REPO" --json visibility --jq .visibility)" = PUBLIC
           mkdir -p input output
-          gh release download "$SOURCE_TAG" --pattern GomuGomuSurvivors-ios-export-v1.5.0.zip --dir input
+          gh release download "$SOURCE_TAG" --pattern GomuGomuSurvivors-ios-export-v1.10.0.zip --dir input
       - name: Verify archive and every exported file
         env:
           SOURCE_SHA256: ${{ inputs.source_sha256 }}
-        run: python3 IOSBuild.py extract --archive input/GomuGomuSurvivors-ios-export-v1.5.0.zip --sha256 "$SOURCE_SHA256" --output output/extracted
+        run: python3 IOSBuild.py extract --archive input/GomuGomuSurvivors-ios-export-v1.10.0.zip --sha256 "$SOURCE_SHA256" --output output/extracted
       - name: Compile ARM64 iOS device app and package unsigned IPA
-        run: python3 IOSBuild.py build --project output/extracted/ios-export --ipa output/GomuGomuSurvivors-iPhone-unsigned-v1.5.0.ipa --work output/work --report output/build-report.json
-      - name: Attach the verified IPA to the private input release
+        run: python3 IOSBuild.py build --project output/extracted/ios-export --ipa output/GomuGomuSurvivors-iPhone-unsigned-v1.10.0.ipa --work output/work --report output/build-report.json
+      - name: Attach the verified IPA to the public input release
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_TAG: ${{ inputs.source_tag }}
           GH_REPO: ${{ github.repository }}
         run: |
-          test "$(gh repo view "$GH_REPO" --json isPrivate --jq .isPrivate)" = true
+          test "$(gh repo view "$GH_REPO" --json visibility --jq .visibility)" = PUBLIC
           gh release upload "$SOURCE_TAG" \
-            output/GomuGomuSurvivors-iPhone-unsigned-v1.5.0.ipa \
-            output/GomuGomuSurvivors-iPhone-unsigned-v1.5.0.ipa.sha256 \
+            output/GomuGomuSurvivors-iPhone-unsigned-v1.10.0.ipa \
+            output/GomuGomuSurvivors-iPhone-unsigned-v1.10.0.ipa.sha256 \
             output/build-report.json output/input-verification.json
       - name: Collect build diagnostics
         if: failure()
